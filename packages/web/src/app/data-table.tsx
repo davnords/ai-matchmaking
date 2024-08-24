@@ -112,63 +112,37 @@ export function DataTable<TData, TValue>({
                         </Button>
                     )}
                 </div>
-                {table.getFilteredSelectedRowModel().rows.length > 0 ? (
-                    <div className="flex flex-row space-x-2 w-full items-center">
-                        <div className="flex-1 text-sm text-muted-foreground text-right">
-                            {table.getFilteredSelectedRowModel().rows.length} row(s) selected.
-                        </div>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button disabled={isPending} variant="outline" className="ml-auto">
-                                    {isPending ? 'Loading...' : <> Actions <MoreHorizontal className="ml-2 h-4 w-4" /></>}
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuLabel>Bulk Actions</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleBulkAction("delete")}>
-                                    Delete Selected
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleBulkAction("export")}>
-                                    Export Selected
-                                </DropdownMenuItem>
-                                {/* Add more bulk actions as needed */}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
 
-                ) :
-                    <>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="ml-auto">
-                                    Columns
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                {table
-                                    .getAllColumns()
-                                    .filter(
-                                        (column) => column.getCanHide()
+                <div className="hidden md:block">
+                    <DropdownMenu >
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="ml-auto">
+                                Columns
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            {table
+                                .getAllColumns()
+                                .filter(
+                                    (column) => column.getCanHide()
+                                )
+                                .map((column) => {
+                                    return (
+                                        <DropdownMenuCheckboxItem
+                                            key={column.id}
+                                            className="capitalize"
+                                            checked={column.getIsVisible()}
+                                            onCheckedChange={(value) =>
+                                                column.toggleVisibility(!!value)
+                                            }
+                                        >
+                                            {column.id}
+                                        </DropdownMenuCheckboxItem>
                                     )
-                                    .map((column) => {
-                                        return (
-                                            <DropdownMenuCheckboxItem
-                                                key={column.id}
-                                                className="capitalize"
-                                                checked={column.getIsVisible()}
-                                                onCheckedChange={(value) =>
-                                                    column.toggleVisibility(!!value)
-                                                }
-                                            >
-                                                {column.id}
-                                            </DropdownMenuCheckboxItem>
-                                        )
-                                    })}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </>
-                }
-
+                                })}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
             <div className="rounded-md border">
                 <Table>
@@ -215,7 +189,7 @@ export function DataTable<TData, TValue>({
                 </Table>
             </div>
 
-            <div className="mt-2">
+            <div className="hidden md:block mt-2">
                 <DataTablePagination table={table} />
             </div>
 

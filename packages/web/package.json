@@ -53,6 +53,7 @@
     "next": "14.2.6",
     "next-auth": "^4.24.7",
     "next-themes": "^0.3.0",
+    "openai": "^4.56.0",
     "prisma": "^5.18.0",
     "react": "^18",
     "react-day-picker": "^8.10.1",
