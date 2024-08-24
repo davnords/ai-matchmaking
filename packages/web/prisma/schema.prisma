@@ -1,0 +1,45 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  salt      String
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trackOutSheet Json[]
+
+  similaritiesAsUser1 Similarity[] @relation("User1")
+  similaritiesAsUser2 Similarity[] @relation("User2")
+}
+
+model Similarity {
+  id              Int    @id @default(autoincrement())
+  user1Email      String
+  user2Email      String
+  similarityScore Float
+
+  // Relationships
+  user1 User @relation("User1", fields: [user1Email], references: [email])
+  user2 User @relation("User2", fields: [user2Email], references: [email])
+
+  // Ensure unique pairs of users
+  @@unique([user1Email, user2Email])
+}
