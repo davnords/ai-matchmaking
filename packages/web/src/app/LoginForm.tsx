@@ -35,8 +35,6 @@ export function LoginForm({ className, ...props }: UserAuthFormProps) {
 
         setLoading(false);
 
-
-
     };
 
     return (

@@ -9,6 +9,7 @@ import { FileUploadDemo } from "./FileUpload";
 import { prisma } from "@/lib/prisma";
 import { DataTable } from "./data-table";
 import { columns } from "./columns";
+import LogOutButton from "./LogOutButton";
 
 export interface SimilarityMatching {
   id: number;

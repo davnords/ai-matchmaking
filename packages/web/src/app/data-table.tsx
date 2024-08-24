@@ -38,6 +38,7 @@ import { Cross2Icon } from "@radix-ui/react-icons"
 import { MoreHorizontal } from "lucide-react"
 import { DataTableFacetedFilter } from "@/components/ui/DataTableFacetedFilter"
 import { DataTablePagination } from "@/components/ui/Paginations"
+import LogOutButton from "./LogOutButton"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -114,34 +115,37 @@ export function DataTable<TData, TValue>({
                 </div>
 
                 <div className="hidden md:block">
-                    <DropdownMenu >
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="ml-auto">
-                                Columns
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            {table
-                                .getAllColumns()
-                                .filter(
-                                    (column) => column.getCanHide()
-                                )
-                                .map((column) => {
-                                    return (
-                                        <DropdownMenuCheckboxItem
-                                            key={column.id}
-                                            className="capitalize"
-                                            checked={column.getIsVisible()}
-                                            onCheckedChange={(value) =>
-                                                column.toggleVisibility(!!value)
-                                            }
-                                        >
-                                            {column.id}
-                                        </DropdownMenuCheckboxItem>
+                    <div className="flex flex-row space-x-2 items-center">
+                        <LogOutButton />
+                        <DropdownMenu >
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="ml-auto">
+                                    Columns
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                {table
+                                    .getAllColumns()
+                                    .filter(
+                                        (column) => column.getCanHide()
                                     )
-                                })}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                                    .map((column) => {
+                                        return (
+                                            <DropdownMenuCheckboxItem
+                                                key={column.id}
+                                                className="capitalize"
+                                                checked={column.getIsVisible()}
+                                                onCheckedChange={(value) =>
+                                                    column.toggleVisibility(!!value)
+                                                }
+                                            >
+                                                {column.id}
+                                            </DropdownMenuCheckboxItem>
+                                        )
+                                    })}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                 </div>
             </div>
             <div className="rounded-md border">

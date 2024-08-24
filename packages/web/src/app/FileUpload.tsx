@@ -9,6 +9,7 @@ import { toast } from "sonner";
 export function FileUploadDemo() {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false)
+    const [firstOpen, setFirstOpen] =useState(false)
 
     const handleFileUpload = async (files: File[]) => {
         setError(null);
