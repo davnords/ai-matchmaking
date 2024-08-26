@@ -48,10 +48,7 @@ export async function processExcelFile(formData: FormData) {
                 }
             };
 
-            const cellC14 = worksheet.getCell("C14")
-            if(!cellC14.text.startsWith("Why do you want to start a company")){
-                return { error: "Your track-out sheet does not match the format required" };
-            }
+            
 
             processCellRange(14, 22);
             processCellRange(25, 30);

@@ -32,9 +32,7 @@ export function LoginForm({ className, ...props }: UserAuthFormProps) {
         else {
             toast.error(result?.error)
         }
-
         setLoading(false);
-
     };
 
     return (
