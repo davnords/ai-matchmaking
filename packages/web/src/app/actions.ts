@@ -48,7 +48,10 @@ export async function processExcelFile(formData: FormData) {
                 }
             };
 
-            
+            const cellC14 = worksheet.getCell("C14")
+            if(!cellC14.text.startsWith("Why do you want to start a company")){
+                return { error: "Your track-out sheet does not match the format required or it was parsed incorrectly" };
+            } 
 
             processCellRange(14, 22);
             processCellRange(25, 30);
@@ -109,7 +112,7 @@ async function processSimilarity(currentUserData: TrackOutRow[], otherUserData: 
                         properties: {
                             similarityScore: {
                                 type: "number",
-                                description: "The degree to which these founders are a good match based on the answers they have provided to the questions.",
+                                description: "The degree to which these founders are a good match based on the answers they have provided to the questions. Please give exact scores, like with 2 decimal places to be able to differentiate between matches.",
                                 minimum: 0,
                                 maximum: 1
                             },
@@ -137,9 +140,9 @@ async function processSimilarity(currentUserData: TrackOutRow[], otherUserData: 
         }).join("\n\n")
 
         const messages = [
-            { role: "system", content: "You are a founder matchmaker. Your job is to process start-up founders answers to important questions and set a matchmaking score based on their compatibility in starting a start up together." },
+            { role: "system", content: "You are a founder matchmaker. Your job is to process start-up founders answers to important questions and set a matchmaking score based on their compatibility in starting a start up together. Set as exact a score as possible and consider founder values to be important to be matching but founder skills to be better if they are complementary." },
             {
-                role: "user", content: `Hi, can you process these two founders and set a similarity score based on how well they would match eacother starting a startup?
+                role: "user", content: `Hi, can you process these two founders and set a matching score based on how well they would match eacother starting a startup?
                 Here is the data: ${processedData}
                 ` }
         ];
