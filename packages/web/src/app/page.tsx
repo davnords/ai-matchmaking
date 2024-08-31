@@ -10,13 +10,15 @@ import { prisma } from "@/lib/prisma";
 import { DataTable } from "./data-table";
 import { columns } from "./columns";
 import LogOutButton from "./LogOutButton";
+import { processSimilarityScores } from "./data";
 
 export interface SimilarityMatching {
   id: number;
-  similarityScore: number,
-  userId: string,
-  email: string,
-  name: string,
+  similarityScore: number;
+  userId: string;
+  email: string;
+  name: string;
+  createdAt: Date;
 }
 
 export default async function Home() {
@@ -37,19 +39,22 @@ export default async function Home() {
       user2: true,
     }
   })
+  const user = await prisma.user.findUnique({ where: { email: session?.user?.email ?? '' }, include: { similaritiesAsUser1: true, similaritiesAsUser2: true } })
   const processedSimilarities = similarities.map(similarity => {
     const otherUser = similarity.user1Email === session?.user?.email ? similarity.user2 : similarity.user1;
     return {
       id: similarity.id,
-      similarityScore: similarity.similarityScore,
+      similarityScore: processSimilarityScores(similarity.similarityScores, user?.useComplementary ?? true),
       userId: otherUser.id,
       email: otherUser.email,
       name: otherUser.name,
+      createdAt: similarity.createdAt,
     } as SimilarityMatching;
   })
     .sort((a, b) => b.similarityScore - a.similarityScore);
 
-  const user = await prisma.user.findUnique({ where: { email: session?.user?.email ?? '' }, include: { similaritiesAsUser1: true, similaritiesAsUser2: true } })
+
+
   if (user?.trackOutSheet && user.trackOutSheet.length > 0) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-between p-4 sm:p-8 md:p-24 ">
@@ -58,7 +63,7 @@ export default async function Home() {
             <span className="text-xl font-semibold">Ranking of your co-founder matches</span>
             <span className="text-base text-gray-500">Results for {session.user.name}</span>
           </div>
-          <DataTable columns={columns} data={processedSimilarities} />
+          <DataTable columns={columns} data={processedSimilarities} user={user} />
         </div>
       </main>
     )

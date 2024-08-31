@@ -20,7 +20,8 @@ export function LoginForm({ className, ...props }: UserAuthFormProps) {
         setLoading(true);
 
         const result = await signIn('credentials', {
-            redirect: false,
+            redirect: true,
+            callbackUrl: `/`,
             email: email,
             password: password,
         });

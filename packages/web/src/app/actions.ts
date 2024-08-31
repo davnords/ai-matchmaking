@@ -1,6 +1,5 @@
 'use server'
 
-import { NextRequest } from "next/server";
 import * as ExcelJS from 'exceljs';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
@@ -24,10 +23,16 @@ export async function processExcelFile(formData: FormData) {
         return { error: "No file uploaded" };
     }
 
+
     if (!session?.user?.email) {
         return { error: "Unauthorized" };
     }
 
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } })
+
+    if (!user) {
+        return { error: "Unauthorized" };
+    }
 
     try {
         const arrayBuffer = await file.arrayBuffer();
@@ -49,37 +54,77 @@ export async function processExcelFile(formData: FormData) {
             };
 
             const cellC14 = worksheet.getCell("C14")
-            if(!cellC14.text.startsWith("Why do you want to start a company")){
+            if (!cellC14.text.startsWith("Why do you want to start a company")) {
                 return { error: "Your track-out sheet does not match the format required or it was parsed incorrectly" };
-            } 
+            }
 
             processCellRange(14, 22);
             processCellRange(25, 30);
             processCellRange(33, 41);
             processCellRange(56, 63);
 
+
+            const embeddingArray = []
+            let i = 0;
+            for (const row of cellValues) {
+                const embedding = await openai.embeddings.create({
+                    model: "text-embedding-ada-002",
+                    input: row.answer,
+                    encoding_format: 'float',
+                })
+                const normalizedEmbedding = normalizeEmbedding(embedding.data[0].embedding);
+
+                embeddingArray.push({
+                    answer: row.answer,
+                    question: row.question,
+                    questionNumber: i,
+                    embedding: normalizedEmbedding,
+                })
+                i++;
+            }
+
+            await prisma.answerEmbedding.createMany({
+                data: embeddingArray.map(embedding => ({
+                    userId: user.id,
+                    question: embedding.question,
+                    questionNumber: embedding.questionNumber,
+                    answer: embedding.answer,
+                    embedding: embedding.embedding
+                })),
+            });
+
             const users = await prisma.user.findMany({
                 where: {
                     email: {
                         not: session.user.email
                     }
+                },
+                include: {
+                    answerEmbeddings: {
+                        orderBy: { questionNumber: 'asc' }
+                    }
                 }
             })
+
+
             for (const user of users) {
-                const trackOutSheet = user.trackOutSheet as unknown as TrackOutRow[]
-                if (trackOutSheet?.length > 0) {
-                    const response = await processSimilarity(cellValues, trackOutSheet)
-                    if (response) {
-                        const similarity = await prisma.similarity.create({
-                            data: {
-                                user1Email: session.user.email,
-                                user2Email: user.email,
-                                similarityScore: response
-                            }
-                        });
-                    } else {
-                        console.log('Something went wrong processing a user')
+                const userEmbeddings = user.answerEmbeddings
+                if (userEmbeddings.length > 0) {
+                    const similarityScores = [];
+                    for (let k = 0; k < userEmbeddings.length; k++) {
+                        const embedding1 = embeddingArray[k].embedding
+                        const embedding2 = userEmbeddings[k].embedding
+
+                        const similarity = cosineSimilarity(embedding1, embedding2);
+                        similarityScores.push(similarity);
                     }
+                    await prisma.similarity.create({
+                        data: {
+                            user1Email: session.user.email,
+                            user2Email: user.email,
+                            similarityScores,
+                        }
+                    });
                 }
             }
 
@@ -88,6 +133,7 @@ export async function processExcelFile(formData: FormData) {
                     trackOutSheet: cellValues as [],
                 }
             })
+
             revalidatePath('/')
             return { success: "Huge success!!" };
         } else {
@@ -99,71 +145,22 @@ export async function processExcelFile(formData: FormData) {
     }
 }
 
-async function processSimilarity(currentUserData: TrackOutRow[], otherUserData: TrackOutRow[]) {
-    try {
-        const tools = [
-            {
-                type: "function",
-                function: {
-                    name: "set_founder_similarity_score",
-                    description: "Set the founder similarity score between two founders. ",
-                    parameters: {
-                        type: "object",
-                        properties: {
-                            similarityScore: {
-                                type: "number",
-                                description: "The degree to which these founders are a good match based on the answers they have provided to the questions. Please give exact scores, like with 2 decimal places to be able to differentiate between matches.",
-                                minimum: 0,
-                                maximum: 1
-                            },
-                        },
-                        required: ["similarityScore"],
-                        additionalProperties: false,
-                    },
-                }
-            }
-        ];
-        if (currentUserData.length !== otherUserData.length) {
-            console.log('Lengths are not matching')
-            return null
+function normalizeEmbedding(embedding: number[]): number[] {
+    const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
+    return embedding.map(val => val / magnitude);
+}
+
+function cosineSimilarity(vec1: number[], vec2: number[]): number {
+    const dotProduct: number = vec1.reduce((sum, val, i) => sum + val * vec2[i], 0);
+    // Since vectors are normalized, we don't need to divide by magnitudes
+    return dotProduct;
+}
+
+export async function changeUserChoice(userId: string, choice: boolean) {
+    await prisma.user.update({
+        where: { id: userId }, data: {
+            useComplementary: choice
         }
-
-        const processedData = currentUserData.map((c, index) => {
-            return `
-            Question: ${c.question}
-            
-            Founder 1 answer: ${c.answer}
-            
-            Founder 2 answer: ${otherUserData?.[index]?.answer}
-            
-            `
-        }).join("\n\n")
-
-        const messages = [
-            { role: "system", content: "You are a founder matchmaker. Your job is to process start-up founders answers to important questions and set a matchmaking score based on their compatibility in starting a start up together. Set as exact a score as possible and consider founder values to be important to be matching but founder skills to be better if they are complementary." },
-            {
-                role: "user", content: `Hi, can you process these two founders and set a matching score based on how well they would match eacother starting a startup?
-                Here is the data: ${processedData}
-                ` }
-        ];
-
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: messages as any,
-            temperature: 0,
-            tools: tools as any,
-        });
-        const toolCall = response.choices[0]?.message.tool_calls?.[0];
-        if (toolCall?.function.arguments) {
-            const functionArguments = JSON?.parse(toolCall?.function.arguments);
-            const score = functionArguments?.similarityScore as number
-            return score
-        } else {
-            console.log('OpenAI API error')
-            return null
-        }
-    } catch (error) {
-        console.log('OpenAI API error', error)
-        return null
-    }
+    })
+    revalidatePath('/')
 }

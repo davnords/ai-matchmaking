@@ -39,16 +39,22 @@ import { MoreHorizontal } from "lucide-react"
 import { DataTableFacetedFilter } from "@/components/ui/DataTableFacetedFilter"
 import { DataTablePagination } from "@/components/ui/Paginations"
 import LogOutButton from "./LogOutButton"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { User } from "@prisma/client"
+import { changeUserChoice } from "./actions"
+import { IconSpinner } from "@/components/ui/icons"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
-    data: TData[]
+    data: TData[],
+    user: User,
 }
 
 
 export function DataTable<TData, TValue>({
     columns,
     data,
+    user,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -116,6 +122,21 @@ export function DataTable<TData, TValue>({
 
                 <div className="hidden md:block">
                     <div className="flex flex-row space-x-2 items-center">
+                        <Select disabled={isPending} value={user.useComplementary ? 'true' : 'false'} onValueChange={(value) => {
+                            startTransition(async () => (
+                                await changeUserChoice(user.id, value === 'true')
+                            ))
+                        }}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Select a match type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectItem value={"true"}>{isPending ? <IconSpinner /> : 'Complementary'}</SelectItem>
+                                    <SelectItem value={"false"}>{isPending ? <IconSpinner /> : 'Similar'}</SelectItem>
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
                         <LogOutButton />
                         <DropdownMenu >
                             <DropdownMenuTrigger asChild>
