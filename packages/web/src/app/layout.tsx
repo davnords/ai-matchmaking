@@ -4,6 +4,7 @@ import "./globals.css";
 import AuthProvider from "./AuthProvider";
 import ThemeProvider from "./ThemeProvider";
 import { Toaster } from "@/components/ui/sonner-toaster";
+import LoadingArray from "@/components/ui/loading-array";
 
 const inter = Inter({ subsets: ["latin"] });
 

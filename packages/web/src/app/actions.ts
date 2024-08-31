@@ -156,6 +156,21 @@ function cosineSimilarity(vec1: number[], vec2: number[]): number {
     return dotProduct;
 }
 
+function reScaledCosineSimilarity(vec1: number[], vec2: number[]): number {
+    const dotProduct: number = vec1.reduce((sum, val, i) => sum + val * vec2[i], 0);
+    // Since vectors are normalized, we don't need to divide by magnitudes
+    const rawSimilarity = dotProduct;
+
+    // Apply min-max scaling to spread out the values
+    const minSimilarity = 0.7; // Adjust based on your observed minimum
+    const maxSimilarity = 0.9; // Adjust based on your observed maximum
+
+    const scaledSimilarity = (rawSimilarity - minSimilarity) / (maxSimilarity - minSimilarity);
+
+    // Clamp the value between 0 and 1
+    return Math.max(0, Math.min(1, scaledSimilarity));
+}
+
 export async function changeUserChoice(userId: string, choice: boolean) {
     await prisma.user.update({
         where: { id: userId }, data: {
