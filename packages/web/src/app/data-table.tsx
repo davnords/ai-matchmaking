@@ -38,13 +38,13 @@ import { Cross2Icon, UpdateIcon } from "@radix-ui/react-icons"
 import { MoreHorizontal } from "lucide-react"
 import { DataTableFacetedFilter } from "@/components/ui/DataTableFacetedFilter"
 import { DataTablePagination } from "@/components/ui/Paginations"
-import LogOutButton from "./LogOutButton"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { User } from "@prisma/client"
 import { changeUserChoice, removeUserData, runStressTest } from "./actions"
 import { IconSpinner } from "@/components/ui/icons"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -124,21 +124,39 @@ export function DataTable<TData, TValue>({
 
                 <div className="hidden md:block">
                     <div className="flex flex-row space-x-2 items-center">
-                        <Select disabled={isPending} value={user.useComplementary ? 'true' : 'false'} onValueChange={(value) => {
-                            startTransition(async () => (
-                                await changeUserChoice(user.id, value === 'true')
-                            ))
-                        }}>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Select a match type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    <SelectItem value={"true"}>{isPending ? <IconSpinner /> : 'Complementary'}</SelectItem>
-                                    <SelectItem value={"false"}>{isPending ? <IconSpinner /> : 'Similar'}</SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div> {/* Wrapper div to make the Select triggerable */}
+                                    <Select
+                                        disabled={isPending}
+                                        value={user.useComplementary ? 'true' : 'false'}
+                                        onValueChange={(value) => {
+                                            startTransition(async () => (
+                                                await changeUserChoice(user.id, value === 'true')
+                                            ))
+                                        }}
+                                    >
+                                        <SelectTrigger className="w-[180px]">
+                                            <SelectValue placeholder="Select a match type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                <SelectLabel>Choose match type</SelectLabel>
+                                                <SelectItem value="true">
+                                                    {isPending ? <IconSpinner /> : 'Complementary'}
+                                                </SelectItem>
+                                                <SelectItem value="false">
+                                                    {isPending ? <IconSpinner /> : 'Similar'}
+                                                </SelectItem>
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Complementary is the default</p>
+                            </TooltipContent>
+                        </Tooltip>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button disabled={isPending} variant={"default"}>{isPending ? <IconSpinner /> :
@@ -172,8 +190,6 @@ export function DataTable<TData, TValue>({
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
-
-                        <LogOutButton />
                         <DropdownMenu >
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="ml-auto">

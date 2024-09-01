@@ -5,6 +5,9 @@ import AuthProvider from "./AuthProvider";
 import ThemeProvider from "./ThemeProvider";
 import { Toaster } from "@/components/ui/sonner-toaster";
 import LoadingArray from "@/components/ui/loading-array";
+import NavigationMenuComponent from "./NavigationMenu";
+import { TooltipProvider } from "@/components/ui/tooltip";
+
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,12 +24,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <AuthProvider>
-        <body className={inter.className}>
-          <Toaster position="top-right" />
-          <ThemeProvider>
-            {children}
-          </ThemeProvider>
-        </body>
+        <TooltipProvider>
+          <body className={inter.className}>
+            <Toaster position="top-right" />
+            <ThemeProvider>
+              <NavigationMenuComponent />
+              {children}
+            </ThemeProvider>
+          </body>
+        </TooltipProvider>
       </AuthProvider>
     </html>
   );

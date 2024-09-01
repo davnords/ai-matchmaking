@@ -39,7 +39,9 @@ export const columns: ColumnDef<SimilarityMatching>[] = [
         cell: ({ row }) => {
             return (
                 <Link href={`/similarity/${row.original.id}`}>
-                    {row.original.name}
+                    <Badge variant={"outline"}>
+                        {row.original.name}
+                    </Badge>
                 </Link>
             )
         }
