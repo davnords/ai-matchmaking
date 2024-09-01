@@ -269,7 +269,6 @@ export function DataTable<TData, TValue>({
             <div className="hidden md:block mt-2">
                 <DataTablePagination table={table} />
             </div>
-
         </div >
     )
 }

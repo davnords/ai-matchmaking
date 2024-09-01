@@ -74,6 +74,7 @@ export function FileUploadDemo() {
                         {isLoading && (
                             <div className="flex flex-col space-y-2 items-center justify-center text-xl mt-24">
                                 <span>Analyzing track out sheet</span>
+                                <span className="text-sm text-muted-foreground">The results will be shown shortly...</span>
                                 <IconSpinner className="w-8 h-8" />
                             </div>
                         )}
