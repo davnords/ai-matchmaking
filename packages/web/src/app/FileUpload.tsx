@@ -61,6 +61,9 @@ export function FileUploadDemo() {
         {
             title: "Your answers should be in column D with questions in column C, the first answer should appear on row 14.",
         },
+        {
+            title: "By continuing you agree to store your data on our servers and embed your answers.",
+        },
     ]
 
 
