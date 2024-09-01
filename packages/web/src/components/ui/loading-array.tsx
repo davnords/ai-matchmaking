@@ -2,7 +2,7 @@ import React from 'react'
 
 function LoadingArray({ length }: { length: number }) {
     return (
-        <div className="flex flex-col flex-1 px-4 space-y-4 overflow-auto">
+        <div className="flex flex-col flex-1 space-y-4 overflow-auto">
             {Array.from({ length }).map((_, i) => (
                 <div
                     key={i}

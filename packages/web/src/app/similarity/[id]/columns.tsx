@@ -27,13 +27,14 @@ export const columns: ColumnDef<SimilarityData>[] = [
             let badgeColor = ""
 
             if (score >= 80) {
-                badgeColor = "bg-green-500 hover:bg-green-300"
+                badgeColor = "bg-green-700 hover:bg-green-500"
             } else if (score >= 60) {
+                badgeColor = "bg-green-500 hover:bg-green-300"
+            } else if (score >= 50) {
                 badgeColor = "bg-yellow-500 hover:bg-yellow-300"
             } else {
                 badgeColor = "bg-red-500 hover:bg-red-300"
             }
-
             return (
                 <Badge className={`${badgeColor} text-white`}>
                     {score.toFixed(1)}%

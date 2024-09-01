@@ -115,7 +115,7 @@ export async function processExcelFile(formData: FormData) {
                         const embedding1 = embeddingArray[k].embedding
                         const embedding2 = userEmbeddings[k].embedding
 
-                        const similarity = cosineSimilarity(embedding1, embedding2);
+                        const similarity = reScaledCosineSimilarity(embedding1, embedding2);
                         similarityScores.push(similarity);
                     }
                     await prisma.similarity.create({
@@ -162,8 +162,8 @@ function reScaledCosineSimilarity(vec1: number[], vec2: number[]): number {
     const rawSimilarity = dotProduct;
 
     // Apply min-max scaling to spread out the values
-    const minSimilarity = 0.45; // Adjust based on your observed minimum
-    const maxSimilarity = 0.95; // Adjust based on your observed maximum
+    const minSimilarity = 0.6; // Adjust based on your observed minimum
+    const maxSimilarity = 0.90; // Adjust based on your observed maximum
 
     const scaledSimilarity = (rawSimilarity - minSimilarity) / (maxSimilarity - minSimilarity);
 
