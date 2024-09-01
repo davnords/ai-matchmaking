@@ -34,15 +34,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 import React, { useState, useTransition } from "react"
-import { Cross2Icon } from "@radix-ui/react-icons"
+import { Cross2Icon, UpdateIcon } from "@radix-ui/react-icons"
 import { MoreHorizontal } from "lucide-react"
 import { DataTableFacetedFilter } from "@/components/ui/DataTableFacetedFilter"
 import { DataTablePagination } from "@/components/ui/Paginations"
 import LogOutButton from "./LogOutButton"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { User } from "@prisma/client"
-import { changeUserChoice } from "./actions"
+import { changeUserChoice, removeUserData, runStressTest } from "./actions"
 import { IconSpinner } from "@/components/ui/icons"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -137,6 +139,40 @@ export function DataTable<TData, TValue>({
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button disabled={isPending} variant={"default"}>{isPending ? <IconSpinner /> :
+                                    <div className="flex flex-row space-x-1 items-center">
+                                        <UpdateIcon />
+                                        <span>
+                                            Update
+                                        </span>
+                                    </div>
+                                }</Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action will detele all your matches and require you to upload your track-out sheet again. This action is permanent.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => {
+                                        startTransition(async () => {
+                                            const result = await removeUserData(user.id)
+                                            if (result.success) {
+                                                toast.success(result.message)
+                                            } else {
+                                                toast.error(result.message)
+                                            }
+                                        })
+                                    }}>Continue</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+
                         <LogOutButton />
                         <DropdownMenu >
                             <DropdownMenuTrigger asChild>
@@ -168,7 +204,7 @@ export function DataTable<TData, TValue>({
                         </DropdownMenu>
                     </div>
                 </div>
-            </div>
+            </div >
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
@@ -218,6 +254,6 @@ export function DataTable<TData, TValue>({
                 <DataTablePagination table={table} />
             </div>
 
-        </div>
+        </div >
     )
 }

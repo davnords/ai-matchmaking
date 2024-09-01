@@ -162,8 +162,8 @@ function reScaledCosineSimilarity(vec1: number[], vec2: number[]): number {
     const rawSimilarity = dotProduct;
 
     // Apply min-max scaling to spread out the values
-    const minSimilarity = 0.7; // Adjust based on your observed minimum
-    const maxSimilarity = 0.9; // Adjust based on your observed maximum
+    const minSimilarity = 0.45; // Adjust based on your observed minimum
+    const maxSimilarity = 0.95; // Adjust based on your observed maximum
 
     const scaledSimilarity = (rawSimilarity - minSimilarity) / (maxSimilarity - minSimilarity);
 
@@ -178,4 +178,78 @@ export async function changeUserChoice(userId: string, choice: boolean) {
         }
     })
     revalidatePath('/')
+}
+
+
+
+export async function runStressTest() {
+    const users = Array.from({ length: 1000 }, (_, i) => ({
+        email: `user${i}@example.com`,
+        answerEmbeddings: Array.from({ length: 32 }, () => ({
+            embedding: Array.from({ length: 1536 }, () => Math.random())
+        }))
+    }));
+
+    const embeddingArray = Array.from({ length: 32 }, () => ({
+        embedding: Array.from({ length: 1536 }, () => Math.random())
+    }));
+
+
+    console.time('Stress Test');
+
+
+    for (const user of users) {
+        const userEmbeddings = user.answerEmbeddings;
+        if (userEmbeddings.length > 0) {
+            const similarityScores = [];
+            for (let k = 0; k < userEmbeddings.length; k++) {
+                const embedding1 = embeddingArray[k].embedding;
+                const embedding2 = userEmbeddings[k].embedding;
+
+                const similarity = cosineSimilarity(embedding1, embedding2);
+                similarityScores.push(similarity);
+            }
+        }
+    }
+
+    console.timeEnd('Stress Test');
+}
+
+export async function removeUserData(userId: string) {
+    try {
+        const result = await prisma.$transaction(async (tx) => {
+            // Delete all similarities where the user is involved
+            await tx.similarity.deleteMany({
+                where: {
+                    OR: [
+                        { user1: { id: userId } },
+                        { user2: { id: userId } }
+                    ]
+                }
+            });
+
+            // Delete all answer embeddings for the user
+            await tx.answerEmbedding.deleteMany({
+                where: { userId: userId }
+            });
+
+            // Optional: If you want to keep the user but clear their data
+            await tx.user.update({
+                where: { id: userId },
+                data: {
+                    trackOutSheet: [],
+                    useComplementary: true, // Reset to default value
+                }
+            });
+
+            revalidatePath('/')
+
+            return { success: true, message: "User data removed successfully" };
+        });
+
+        return result;
+    } catch (error) {
+        console.error("Error removing user data:", error);
+        return { success: false, message: "Failed to remove user data", error };
+    }
 }
