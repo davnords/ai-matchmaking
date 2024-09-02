@@ -1,5 +1,6 @@
 "use client"
 
+import { IconSpinner } from "@/components/ui/icons";
 import { cn } from "@/lib/utils"
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -15,13 +16,11 @@ export function LoginForm({ className, ...props }: UserAuthFormProps) {
     const [password, setPassword] = useState<string>('');
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-        console.log('Submitted')
         e.preventDefault();
         setLoading(true);
 
         const result = await signIn('credentials', {
-            redirect: true,
-            callbackUrl: `/`,
+            redirect: false,
             email: email,
             password: password,
         });
@@ -32,8 +31,8 @@ export function LoginForm({ className, ...props }: UserAuthFormProps) {
         }
         else {
             toast.error(result?.error)
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     return (
@@ -90,7 +89,7 @@ export function LoginForm({ className, ...props }: UserAuthFormProps) {
                         className="my-4 flex h-10 w-full flex-row items-center justify-center rounded-md bg-zinc-900 p-2 text-sm font-semibold text-zinc-100 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
                         disabled={loading}
                     >
-                        {loading ? 'Loading...' : 'Log in'}
+                        {loading ? <IconSpinner /> : 'Log in'}
                     </button>
                 </div>
             </form>
