@@ -3,9 +3,11 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import React from 'react'
 import { DataTable } from './data-table'
-import { columns } from './columns'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 import { Slash } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Share1Icon } from '@radix-ui/react-icons'
+import RequestAnswers from './RequestAnswers'
 
 const questions = [
     {
@@ -121,7 +123,12 @@ export default async function SimilarityPage({ params }: { params: { id: string 
             <div>You are in the wrong neighborhood my brother.</div>
         )
     }
-    const otherUser = similarity?.user1Email === session?.user?.email ? similarity?.user2Email : similarity?.user1Email;
+    const currentUser = await prisma.user.findUnique({ where: { email: session?.user?.email }, include: { sentRequests: true } })
+    const otherUserEmail = similarity?.user1Email === session?.user?.email ? similarity?.user2Email : similarity?.user1Email;
+    const otherUser = await prisma.user.findUnique({ where: { email: otherUserEmail }, include: { receivedRequests: true } })
+    const sentRequests = currentUser?.sentRequests.filter((r) => r.receivingUserEmail === otherUserEmail)
+    const acceptedView = sentRequests?.find((r) => r.status === 'ACCEPTED')
+
     const data = questions.map((row, index) => {
         return {
             question: row.question,
@@ -134,21 +141,30 @@ export default async function SimilarityPage({ params }: { params: { id: string 
                 <div className="flex flex-col space-y-1 mb-2">
                     <span className="text-xl font-semibold">Similarity of answers</span>
                 </div>
-                <Breadcrumb className='mb-2'>
-                    <BreadcrumbList>
-                        <BreadcrumbItem>
-                            <BreadcrumbLink href="/">Matches</BreadcrumbLink>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator>
-                            <Slash />
-                        </BreadcrumbSeparator>
+                <div className='flex flex-row justify-between items-center mb-2'>
+                    <Breadcrumb className='mb-2'>
+                        <BreadcrumbList>
+                            <BreadcrumbItem>
+                                <BreadcrumbLink href="/">Matches</BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator>
+                                <Slash />
+                            </BreadcrumbSeparator>
 
-                        <BreadcrumbItem>
-                            <BreadcrumbPage>{otherUser}</BreadcrumbPage>
-                        </BreadcrumbItem>
-                    </BreadcrumbList>
-                </Breadcrumb>
-                <DataTable columns={columns} data={data} />
+                            <BreadcrumbItem>
+                                <BreadcrumbPage>{otherUser?.name}</BreadcrumbPage>
+                            </BreadcrumbItem>
+                        </BreadcrumbList>
+                    </Breadcrumb>
+                    {sentRequests?.find((r) => r.status === 'ACCEPTED') ?
+                        <Button size={"sm"} variant={"outline"} className='text-green-500' disabled>Accepted</Button>
+                        : sentRequests?.find((r) => r.status === 'PENDING') ?
+                            <Button className='text-yellow-500' size={"sm"} variant={"outline"} disabled>Pending</Button> :
+                            <RequestAnswers otherUserEmail={otherUserEmail} currentUserEmail={session?.user?.email} requestId={params.id} />
+                    }
+
+                </div>
+                <DataTable data={data} acceptedView={acceptedView ? true : false} otherUser={otherUser ?? undefined} />
             </div>
         </main>
     )

@@ -32,6 +32,9 @@ model User {
 
   similaritiesAsUser1 Similarity[] @relation("User1")
   similaritiesAsUser2 Similarity[] @relation("User2")
+
+  sentRequests     Request[] @relation("SenderUser")
+  receivedRequests Request[] @relation("ReceivingUser")
 }
 
 model AnswerEmbedding {
@@ -62,4 +65,19 @@ model Similarity {
 
   // Ensure unique pairs of users
   @@unique([user1Email, user2Email])
+}
+
+enum STATUS {
+  ACCEPTED
+  PENDING
+  DECLINED
+}
+
+model Request {
+  id                 String @id @default(cuid())
+  status             STATUS @default(PENDING)
+  senderUserEmail    String
+  receivingUserEmail String
+  senderUser         User   @relation("SenderUser", fields: [senderUserEmail], references: [email])
+  receivingUser      User   @relation("ReceivingUser", fields: [receivingUserEmail], references: [email])
 }

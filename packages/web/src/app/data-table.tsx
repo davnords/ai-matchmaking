@@ -172,7 +172,7 @@ export function DataTable<TData, TValue>({
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        This action will detele all your matches and require you to upload your track-out sheet again. This action is permanent.
+                                        This action will delete all your matches and require you to upload your track-out sheet again. This action is permanent.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
